@@ -115,15 +115,7 @@ the error at all.
 
 ---
 
-## Files
 
-```
-agent1.2.py             <- Task 1 agent (create / explain / modify)
-agent2.1.py             <- Task 2 agent (adds run / detect error / fix, memory, logs)
-README.md               <- this file
-MODEL_AND_DESIGN.md     <- system prompt, tool layer, run tool, memory, flow, safety (for agent2.1.py)
-run_fix_loop.svg         <- animated diagram of the run/fix loop, used in MODEL_AND_DESIGN.md
-```
 
 Note: running `agent2.1.py` creates a `.agent_memory.json` file inside
 whichever workspace folder you choose — that's expected, it's the
