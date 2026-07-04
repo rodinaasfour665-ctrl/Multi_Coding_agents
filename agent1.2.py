@@ -11,8 +11,8 @@ import requests
 # CONFIG - change these two lines for your setup
 # ---------------------------------------------------------------------------
 
-MODEL = ""   
-OLLAMA_URL = ""
+MODEL = "gpt-oss:120b-cloud"   
+OLLAMA_URL = "http://localhost:11434/api/chat"
 
 WORKSPACE = None
 
