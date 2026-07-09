@@ -1,5 +1,3 @@
-
-
 import os
 import sys
 import json
@@ -14,8 +12,8 @@ import requests
 # CONFIG - change these two lines for your setup
 # ---------------------------------------------------------------------------
 
-MODEL = "gpt-oss:120b-cloud"   
-OLLAMA_URL = "http://localhost:11434/api/chat"
+MODEL = ""   
+OLLAMA_URL = ""
 
 WORKSPACE = None                    
 MEMORY_FILE = ".agent_memory.json"  
@@ -88,6 +86,10 @@ FILE_WORDS = ("explain", "read", "modify", "update", "edit", "fix", "change", "r
 
 def precheck_file_reference(user_text):
     lower = user_text.lower()
+    
+    if any(word in lower for word in ("create", "make", "generate", "write")):
+        return None
+    
     if not any(w in lower for w in FILE_WORDS):
         return None
 
@@ -359,16 +361,16 @@ def main():
     memory = load_memory()
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    while True:
+    while True: #طول ما اليوزر بيكتب
         user_text = input("You> ").strip()
         if user_text.lower() in {"exit", "quit"}:
             break
-        if not user_text:
+        if not user_text: # لو مكتبش حاجه سطر فاضي 
             continue
 
         print(f"[USER REQUEST] {user_text}")
 
-        precheck_error = precheck_file_reference(user_text)
+        precheck_error = precheck_file_reference(user_text) # بيتاكد انه مطلعش برا الورك سبيس
         if precheck_error:
             print(precheck_error + "\n")
             continue
@@ -376,9 +378,9 @@ def main():
         messages.append({"role": "user", "content": user_text})
         status = "unknown"
 
-        for step in range(10):
+        for step in range(20):
             try:
-                assistant_message = ask_ollama(messages)
+                assistant_message = ask_ollama(messages) # بيبعت ل اولاما البرومبت و مستنين الرد ب التولز و الارجيومنت
             except RuntimeError as e:
                 print(f"[ERROR] {e}\n")
                 messages.pop()
@@ -388,14 +390,15 @@ def main():
             messages.append(assistant_message)
             tool_calls = assistant_message.get("tool_calls", [])
 
-            if not tool_calls:
+            if not tool_calls: # لو مفيش تولز رجعت بسبب مثلا بعتله رساله فيها هاي
                 print("Agent>", assistant_message.get("content", ""))
                 status = "done"
                 break
 
             for call in tool_calls:
-                name = call["function"]["name"]
-                args = call["function"]["arguments"]
+                name = call["function"]["name"] # بنتستخرج اسم التول  
+                args = call["function"]["arguments"]  #"arguments":{ "path":"app.py"
+                
                 target = args.get("path") or args.get("command") or "-"
 
                 print(f"[TOOL SELECTED] {name}")
@@ -411,6 +414,15 @@ def main():
                     print(f"[FIX ATTEMPT] {memory['last_fix_attempt']}")
 
                 messages.append({"role": "tool", "content": result})
+                if memory.get("last_error") and name in ("run_file", "run_command"):
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "Execution failed. Automatically read the file, "
+                            "diagnose the error, create a backup, fix the code, "
+                            "run it again, and verify the result."
+        )
+    })
         else:
             print("Agent> stopped after too many tool steps")
             status = "stopped (too many steps)"
